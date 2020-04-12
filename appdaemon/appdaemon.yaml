@@ -1,0 +1,10 @@
+appdaemon:
+  plugins:
+    HASS:
+      type: hass
+      ha_url: http://127.0.0.1:8123
+      token: !secret appdaemon_token
+  latitude: !secret my_lat
+  longitude: !secret my_lon
+  elevation: !secret my_elevation
+  time_zone: !secret my_timezone

@@ -1,0 +1,6 @@
+telegram_bot_ha:
+  module: telegram_bot_ha
+  class: TelegramBotEventListener
+  aircon: climate.daikinap67151
+  alarm: alarm_control_panel.home_alarm
+
