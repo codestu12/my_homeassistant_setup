@@ -2,5 +2,14 @@ telegram_bot_ha:
   module: telegram_bot_ha
   class: TelegramBotEventListener
   aircon: climate.daikinap67151
-  alarm: alarm_control_panel.home_alarm
-
+  alarm: 
+    control: alarm_control_panel.home_alarm
+    sensor_group: group.alarm_sensors
+    state_mapping:
+      motion:
+        "off": clear
+        "on": detected
+      door:
+        "off": closed
+        "on": open
+  temp_group: group.house_temps

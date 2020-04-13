@@ -10,9 +10,12 @@ class TelegramBotEventListener(hass.Hass):
         self.alarm_configured = False
         self.temperature_configured = False
         if "aircon" in self.args.keys():
-            self.aircon_configured = True
+            if self.entity_exists(self.args['aircon']):
+                self.aircon_configured = True
         if "alarm" in self.args.keys():
-            self.alarm_configured = True
+            if "control" in self.args['alarm'].keys():
+                if self.entity_exists(self.args['alarm']['control']):
+                    self.alarm_configured = True
         if "temp_group" in self.args.keys():
             self.temperature_configured = True
             
@@ -98,14 +101,37 @@ class TelegramBotEventListener(hass.Hass):
         return msg, keyboard
             
     def alarm_command(self, user_id, user_name):
-        alarm_state = self.get_state(self.args["alarm"])
+        alarm_state = self.get_state(self.args["alarm"]["control"])
         
-        msg = "Alarm is currently {}".format(str(alarm_state).replace("_", " "))
+        msg = "Alarm is currently {}\n".format(str(alarm_state).replace("_", " "))
 
+        msg += self.alarm_sensor_states()
+        
         keyboard = [[("Disarm", "/alarm_set disarm"), ("Arm Night", "/alarm_set arm_night")],
                     [("Arm Away", "/alarm_set arm_away"), ("Goodbye", "/do_nothing")]]
                     
         return msg, keyboard
+    
+    #print alarm sensor states
+    def alarm_sensor_states(self):
+        msg = ""
+
+        if self.entity_exists(self.args["alarm"]["sensor_group"]):
+            sensor_group = self.get_state(self.args["alarm"]["sensor_group"], "entity_id")
+            
+            #iterate entity group
+            for s in sensor_group:
+                this_sensor_name = self.get_state(s, "friendly_name")
+                this_sensor_state = self.get_state(s)
+                this_sensor_device_class = self.get_state(s, "device_class")
+                
+                #remap state text if mapping exists
+                if "state_mapping" in self.args["alarm"].keys():
+                    if this_sensor_device_class in self.args["alarm"]["state_mapping"]:
+                        if this_sensor_state in self.args["alarm"]["state_mapping"][this_sensor_device_class].keys():
+                            this_sensor_state = self.args["alarm"]["state_mapping"][this_sensor_device_class][this_sensor_state]
+                msg += "{}: {}\n".format(this_sensor_name, this_sensor_state)
+        return msg
         
     def alarm_set(self, user_id, user_name):
         self.pending_alarm_state = None
@@ -114,7 +140,14 @@ class TelegramBotEventListener(hass.Hass):
         pass
             
     def temps_command(self, user_id, user_name):
-        msg = "Temps"
+        temp_group = self.get_state(self.args["temp_group"], "entity_id")
+        
+        msg = "Temperatures: \n"
+        for t in temp_group:
+            this_temp_name = self.get_state(t, "friendly_name")
+            this_temp_temp = self.get_state(t)
+            this_temp_units = self.get_state(t, "unit_of_measurement")
+            msg += "{}: {}{}\n".format(this_temp_name, this_temp_temp, this_temp_units)
         
         return msg, None
 
