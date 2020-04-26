@@ -27,6 +27,9 @@ class TelegramBotEventListener(hass.Hass):
             
         #initial states
         self.receiving_alarm_pin = False
+        
+        #logging
+        self.logger = self.get_user_log("test_log")
     
         """Listen to Telegram Bot events of interest."""
         self.listen_event(self.receive_telegram_command, 'telegram_command')
