@@ -134,8 +134,8 @@ class TelegramBotEventListener(hass.Hass):
 
         msg += self.alarm_sensor_states()
         
-        keyboard = [[("Disarm", "/alarm_set disarm"), ("Arm Night", "/alarm_set arm_night")],
-                    [("Arm Away", "/alarm_set arm_away"), ("Goodbye", "/do_nothing")]]
+        keyboard = [[("Disarm", "/alarm_set disarmed"), ("Arm Night", "/alarm_set armed_night")],
+                    [("Arm Away", "/alarm_set armed_away"), ("Goodbye", "/do_nothing")]]
                     
         return msg, keyboard
     
@@ -161,10 +161,12 @@ class TelegramBotEventListener(hass.Hass):
         return msg
     
     #setup for changing alarm state. Prompts user for pin
-    def alarm_set(self, user_id, user_name, args):
+    def alarm_set_command(self, user_id, user_name, args):
         self.pending_alarm_state = None
         msg = "Unknown alarm state"
+        
         if len(args) == 1:
+            msg += " {}".format(args[0])
             if args[0] in ALARM_STATES:
                 self.pending_alarm_state = args[0]
                 self.receiving_alarm_pin = True
@@ -172,7 +174,7 @@ class TelegramBotEventListener(hass.Hass):
         return msg, None
     
     #calls service to change alarm state
-    def action_alarm_pin(pin):
+    def action_alarm_pin(self, pin):
         msg = "Pin is incorrect"
         if isinstance(pin, six.string_types) and  len(pin) < 12 and pin.isalnum():
             #get values for service call
@@ -185,7 +187,7 @@ class TelegramBotEventListener(hass.Hass):
             
             #check that something happened
             alarm_state = self.get_state(self.args["alarm"]["control"])
-            if alarm_state == self.pending_alarm_state:
+            if alarm_state == self.pending_alarm_state or alarm_state == 'pending':
                 msg = "Alarm state changed"
         self.pending_alarm_state = None
         return msg 
@@ -268,15 +270,6 @@ class TelegramBotEventListener(hass.Hass):
         #check for alarm pin sent at prompt
         if self.receiving_alarm_pin:
             msg = self.action_alarm_pin(query_text)
-            
-            #delete message for security
-            self.call_service(
-                "telegram_bot/edit_message",
-                chat_id=chat_id,
-                message_id=msg_id,
-                message="******",
-                inline_keyboard=None
-            )
             
             #send response
             self.call_service(
