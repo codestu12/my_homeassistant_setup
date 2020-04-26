@@ -58,6 +58,7 @@ class TelegramBotEventListener(hass.Hass):
         else:
             ret = False
             
+        msg = msg.replace("_", " ")
         return ret, msg, keyboard 
             
     def process_callback_only_commands(self, command, user_id, user_name):
@@ -70,6 +71,7 @@ class TelegramBotEventListener(hass.Hass):
         else:
             ret = False
         
+        msg = msg.replace("_", " ")
         return ret, msg, keyboard 
 
     def hello_command(self, user_id, user_name, args):
