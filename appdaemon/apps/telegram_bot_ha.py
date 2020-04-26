@@ -290,11 +290,18 @@ class TelegramBotEventListener(hass.Hass):
             
         #regular message/enquiry
         else:
+            keyboard = None
+            
             #received question or random message
-            msg = "Sorry, I didn't understand that."
+            salutations = ['hi', 'hello', 'hola', 'help']
+            if any(s in query_text.lower() for s in salutations):
+                ret, msg, keyboard = self.process_commands("/hello", user_id, user_name, [])
+            else:
+                msg = "Sorry, I didn't understand that."
+                ret = True
             self.call_service(
                 'telegram_bot/send_message',
                 target=user_id,
                 message=msg,
                 disable_notification=True,
-                inline_keyboard=None)
+                inline_keyboard=keyboard)
